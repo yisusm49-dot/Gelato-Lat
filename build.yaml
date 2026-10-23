@@ -1,7 +1,7 @@
 ---
 name: "Gelato"
 guid: "94EA4E14-8163-4989-96FE-0A2094BC2D6A"
-version: "0.26.50.0"
+version: "0.26.28.1000"
 targetAbi: "12.1.0.0"
 framework: "net10.0"
 owner: "lstb1t"
@@ -14,7 +14,10 @@ category: "General"
 # The card in the plugin catalog; Jellyfin downloads it when it reads the repository.
 imageUrl: "https://raw.githubusercontent.com/lostb1t/Gelato/main/banner.png"
 changelog: >
-  LAT-ADD fork: manifest resources in short form, versions merged per quality (relay first,
-  node fallback), stable stream GUIDs across syncs, expired signed URLs re-synced instead of
-  failed over, large-catalog import (CatalogMaxItems 2000, ImportPeople, LazyImages by
-  default, retry with backoff), Gelato-LAT-ADD User-Agent.
+  LAT-ADD fork (0.26.28.1000): stable stream GUIDs only for /media/ URLs so foreign
+  addons keep their query identity (#3); a dead relay with an expired fallback fails
+  over instead of re-syncing in a loop (#4); the expired-URL re-sync waits at most 10s
+  and never hangs the play (#5); fork versioning that upstream can never collide with
+  (#2); settings-page controls for the fork's options (#6). First release: manifest
+  short-form resources, versions merged per quality (relay first, node fallback),
+  expired URLs re-synced, large-catalog import, Gelato-LAT-ADD User-Agent.

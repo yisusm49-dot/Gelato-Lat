@@ -96,6 +96,10 @@ export default function (view) {
   const txtFFmpegProbeSize = page.querySelector('#txtFFmpegProbeSize');
   const chkEnableJavaScriptInjection = page.querySelector('#chkEnableJavaScriptInjection');
   const chkLazyImages = page.querySelector('#chkLazyImages');
+  const chkPreferRelayRoute = page.querySelector('#chkPreferRelayRoute');
+  const chkImportPeople = page.querySelector('#chkImportPeople');
+  const txtPeopleLimit = page.querySelector('#txtPeopleLimit');
+  const txtMetaConcurrency = page.querySelector('#txtMetaConcurrency');
   const chkPersonRemoteTitles = page.querySelector('#chkPersonRemoteTitles');
   const chkHideUnplayedSearchTitles = page.querySelector('#chkHideUnplayedSearchTitles');
   const chkPreProbe = page.querySelector('#chkPreProbe');
@@ -1019,6 +1023,10 @@ export default function (view) {
       if (txtFFmpegProbeSize) txtFFmpegProbeSize.value = cfg.FFmpegProbeSize || "25M";
       if (chkEnableJavaScriptInjection) chkEnableJavaScriptInjection.checked = cfg.EnableJavaScriptInjection || false;
       if (chkLazyImages) chkLazyImages.checked = cfg.LazyImages ?? false;
+      if (chkPreferRelayRoute) chkPreferRelayRoute.checked = cfg.PreferRelayRoute ?? true;
+      if (chkImportPeople) chkImportPeople.checked = cfg.ImportPeople ?? true;
+      if (txtPeopleLimit) txtPeopleLimit.value = cfg.PeopleLimit ?? 0;
+      if (txtMetaConcurrency) txtMetaConcurrency.value = cfg.MetaConcurrency ?? 4;
       if (chkPersonRemoteTitles) chkPersonRemoteTitles.checked = cfg.PersonRemoteTitles ?? true;
       chkHideUnplayedSearchTitles.checked = cfg.HideUnplayedSearchTitles ?? false;
       showPersonRemoteTitles();
@@ -1068,6 +1076,10 @@ export default function (view) {
       cfg.FFmpegProbeSize = txtFFmpegProbeSize.value;
       cfg.EnableJavaScriptInjection = chkEnableJavaScriptInjection.checked;
       cfg.LazyImages = chkLazyImages.checked;
+      cfg.PreferRelayRoute = chkPreferRelayRoute.checked;
+      cfg.ImportPeople = chkImportPeople.checked;
+      cfg.PeopleLimit = txtPeopleLimit.value !== '' ? parseInt(txtPeopleLimit.value) || 0 : 0;
+      cfg.MetaConcurrency = txtMetaConcurrency.value !== '' ? Math.max(1, parseInt(txtMetaConcurrency.value) || 4) : 4;
       cfg.PersonRemoteTitles = chkPersonRemoteTitles.checked;
       cfg.HideUnplayedSearchTitles = chkHideUnplayedSearchTitles.checked;
       cfg.PreProbe = chkPreProbe.checked;

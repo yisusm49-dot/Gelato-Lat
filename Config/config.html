@@ -134,6 +134,38 @@
             </div>
 
             <div class="gelatoCard">
+              <h3><span class="material-icons bolt" aria-hidden="true"></span>LAT-ADD</h3>
+              <p class="cardLead">The fork's own settings, for the LAT-ADD addon.</p>
+              <div class="checkboxContainer checkboxContainer-withDescription">
+                <label>
+                  <input is="emby-checkbox" type="checkbox" id="chkPreferRelayRoute" />
+                  <span>Prefer the relay route</span>
+                </label>
+                <div class="fieldDescription">Each version plays through the relay (⚡) first, with the node's own URL as its fallback. The 4K tier is never relayed: it plays from its node either way.</div>
+              </div>
+
+              <div class="checkboxContainer checkboxContainer-withDescription">
+                <label>
+                  <input is="emby-checkbox" type="checkbox" id="chkImportPeople" />
+                  <span>Import people</span>
+                </label>
+                <div class="fieldDescription">Saves each title's cast and crew. People are the largest cost of an import, in time, database rows and images; a library browsed by titles works without them.</div>
+              </div>
+
+              <div class="inputContainer">
+                <label class="inputLabel inputLabelUnfocused" for="txtPeopleLimit">People per title (0: all):</label>
+                <input type="number" id="txtPeopleLimit" class="emby-input" min="0" />
+                <div class="fieldDescription">With people on, keep only the first N of each title's cast and crew. 0 saves them all.</div>
+              </div>
+
+              <div class="inputContainer">
+                <label class="inputLabel inputLabelUnfocused" for="txtMetaConcurrency">Import parallel requests:</label>
+                <input type="number" id="txtMetaConcurrency" class="emby-input" min="1" max="16" />
+                <div class="fieldDescription">How many titles the catalog import asks the addon for at once. The LAT-ADD nodes are small (2 vCPU): more is not faster, only harsher on them.</div>
+              </div>
+            </div>
+
+            <div class="gelatoCard">
               <h3><span class="material-icons playlist_add" aria-hidden="true"></span>Requests from Seerr</h3>
               <p class="cardLead">A request approved in Seerr (Jellyseerr, Overseerr) adds the title to your library. In Seerr,
                 go to <b>Settings &gt; Notifications &gt; Webhook</b> and fill in these fields.</p>

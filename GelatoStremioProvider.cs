@@ -1908,9 +1908,16 @@ public class StremioStream
         // Some providers attach the same InfoHash to multiple hosters (e.g. Dropload/SuperVideo).
         if (!string.IsNullOrEmpty(Url))
         {
-            // The file the URL serves, not the URL itself: signed URLs change their query on
-            // every answer, and a row keyed by the whole URL died with every sync (fork §4.1).
-            key = LatAdd.StreamKeys.StableFileKey(Url) ?? Url;
+            // The stable file key only where it is one: LAT-ADD-style URLs, whose file lives at
+            // /media/<id>/<file> and whose query is a signature that changes per answer. Another
+            // addon can identify the file in the query (?file=…): two different files would
+            // share a key, and the sync, taking them for duplicates, would delete one (#3).
+            key =
+                LatAdd.StreamKeys.StableFileKey(Url)
+                    is { } fileKey
+                    && fileKey.StartsWith("/media/", StringComparison.OrdinalIgnoreCase)
+                    ? fileKey
+                    : Url;
         }
         else if (!string.IsNullOrEmpty(InfoHash))
         {

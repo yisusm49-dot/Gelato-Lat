@@ -146,6 +146,17 @@ public sealed class StreamKeyFacts
     }
 
     [Fact]
+    public void ForeignUrls_KeepTheirQueryInTheGuid()
+    {
+        // An addon that names its file in the query: the same path is two different files, and
+        // the stable key must not fold them into one version (issue #3).
+        var a = new StremioStream { Url = "https://host.example/play?file=pelicula-1080p.mkv" };
+        var b = new StremioStream { Url = "https://host.example/play?file=pelicula-4k.mkv" };
+
+        Assert.NotEqual(a.GetGuid(), b.GetGuid());
+    }
+
+    [Fact]
     public void Expiry_ReadsTheExpParameter()
     {
         var past = $"https://node4.lat-add.com/media/x/video.mkv?exp={DateTimeOffset.UtcNow.AddHours(-1).ToUnixTimeSeconds()}";

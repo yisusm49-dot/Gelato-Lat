@@ -1,3 +1,9 @@
+> [!IMPORTANT]
+> **This is the LAT-ADD fork (Gelato-Lat).** It keeps upstream's plugin GUID on purpose, so a
+> server must not load both repositories at once — remove the original's repository before
+> installing from this one. Versioning, install steps and recommended settings:
+> **[FORK.md](FORK.md)**.
+
 > [!NOTE]
 > Looking for the next evolution of Gelato?
 > Check out [Remux](https://github.com/lostb1t/remux), a media server written in Rust that replaces Jellyfin instead of plugging into it. It supports local libraries, remote sources, and Stremio addons, and it works with your Jellyfin clients.

@@ -200,12 +200,14 @@ internal sealed class StreamFailover(
 
     /// <summary>
     /// Whether the source's row serves a URL past its expiry: a stale signature to renew, not a
-    /// stream to give up on.
+    /// stream to give up on. The row's own URL only: the fallback's expiry is seen to by
+    /// <see cref="TryOwnRoute"/>, and a dead primary with an expired fallback is a dead primary
+    /// still, to be marked and failed over (#4).
     /// </summary>
     private bool ExpiredRow(string key) =>
         Guid.TryParse(key, out var rowId)
         && decorator.Library.GetItemById(rowId) is { } row
-        && (StreamKeys.Expired(row.Path) || StreamKeys.Expired(row.GelatoData<string?>("fallbackPath")));
+        && StreamKeys.Expired(row.Path);
 
     /// <summary>
     /// Re-syncs the title's rows for a fresh URL and, when one came, plays it: the source keeps
@@ -263,13 +265,29 @@ internal sealed class StreamFailover(
         if (owner is null)
             return;
 
-        var userId =
-            row.GelatoData<List<Guid>>("userIds")?.FirstOrDefault() ?? Guid.Empty;
+        var userId = row.GelatoData<List<Guid>>("userIds")?.FirstOrDefault() ?? Guid.Empty;
 
-        // As a page open does: waited for, so the playback that asked takes the fresh URL.
-        decorator
-            .Manager.Value.SyncStreams(owner, userId, CancellationToken.None)
-            .GetAwaiter()
-            .GetResult();
+        // As a page open does: waited for, so the playback that asked takes the fresh URL. But
+        // no longer than this: the wait sits on the play's thread, and an addon that takes its
+        // time must not hold it for good (#5).
+        try
+        {
+            using var timeout = new CancellationTokenSource(ResyncTimeout);
+            decorator
+                .Manager.Value.SyncStreams(owner, userId, timeout.Token)
+                .GetAwaiter()
+                .GetResult();
+        }
+        catch (Exception ex)
+        {
+            _log.LogWarning(
+                ex,
+                "Re-syncing a title's streams took longer than {Seconds}s; the playback keeps its stream",
+                ResyncTimeout.TotalSeconds
+            );
+        }
     }
+
+    /// <summary>How long a playback waits for the re-sync of a title's expired URLs.</summary>
+    private static readonly TimeSpan ResyncTimeout = TimeSpan.FromSeconds(10);
 }
