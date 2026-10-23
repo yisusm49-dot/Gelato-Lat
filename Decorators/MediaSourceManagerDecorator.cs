@@ -61,6 +61,11 @@ public sealed class MediaSourceManagerDecorator : IMediaSourceManager
         ArgumentNullException.ThrowIfNull(libraryManager);
         ArgumentNullException.ThrowIfNull(config);
 
+        // For the parts that resolve a row from a source's id, or re-sync a title whose signed
+        // URLs went stale (StreamFailover).
+        Library = libraryManager;
+        Manager = manager;
+
         Sync = new StreamSyncOnOpen(libraryManager, log, manager, subtitleProvider);
         Versions = new VersionList(this, inner, libraryManager, log, http, manager);
         Order = new VersionOrder(this, libraryManager, userDataManager);
@@ -98,6 +103,12 @@ public sealed class MediaSourceManagerDecorator : IMediaSourceManager
     internal PreProbes PreProbes { get; }
     internal StreamProbe Probe { get; }
     internal SegmentRuns Segments { get; }
+
+    /// <summary>The library, for the parts that resolve a source's row or refresh a stale one.</summary>
+    internal ILibraryManager Library { get; }
+
+    /// <summary>The manager, for a part that re-syncs a title's streams (stale signed URLs).</summary>
+    internal Lazy<GelatoManager> Manager { get; }
 
     /// <summary>
     /// The key under which a search request holds the sources it built, per item (see

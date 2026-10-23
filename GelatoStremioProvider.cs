@@ -95,28 +95,64 @@ public class GelatoStremioProvider(
         try
         {
             var c = NewClient();
-            using var request = new HttpRequestMessage(HttpMethod.Get, url);
-            if (userAgent is not null)
-                request.Headers.UserAgent.ParseAdd(userAgent);
-            var resp = await c.SendAsync(request).ConfigureAwait(false); // No using statement
 
-            if (!resp.IsSuccessStatusCode)
+            // The addon's nodes are small (2 vCPU): a 429 or a 5xx is a busy moment, not a dead
+            // addon. Asked again after a short, growing wait, honouring Retry-After (fork §3.4).
+            HttpResponseMessage resp;
+            for (var attempt = 1; ; attempt++)
+            {
+                using var request = new HttpRequestMessage(HttpMethod.Get, url);
+                if (userAgent is not null)
+                    request.Headers.UserAgent.ParseAdd(userAgent);
+                resp = await c.SendAsync(request).ConfigureAwait(false); // No using statement
+
+                if (resp.IsSuccessStatusCode || attempt >= 3)
+                    break;
+
+                if (
+                    resp.StatusCode is not (
+                        HttpStatusCode.TooManyRequests
+                            or >= HttpStatusCode.InternalServerError
+                    )
+                )
+                    break;
+
+                var delay = TimeSpan.FromMilliseconds(500 * attempt);
+                if (resp.Headers.RetryAfter?.Delta is { } delta && delta > TimeSpan.Zero)
+                    delay = delta;
+
+                log.LogDebug(
+                    "GetJsonAsync: {Resource} answered {Status}, retrying in {Delay}ms (attempt {Attempt})",
+                    resource,
+                    (int)resp.StatusCode,
+                    delay.TotalMilliseconds,
+                    attempt
+                );
+                resp.Dispose();
+                await Task.Delay(delay).ConfigureAwait(false);
+            }
+
+            using var response = resp;
+
+            if (!response.IsSuccessStatusCode)
             {
                 log.LogWarning(
                     "GetJsonAsync: request failed for {Resource} with {StatusCode} {ReasonPhrase}",
                     resource,
-                    resp.StatusCode,
-                    resp.ReasonPhrase
+                    response.StatusCode,
+                    response.ReasonPhrase
                 );
 
                 throw new HttpRequestException(
-                    $"HTTP {resp.StatusCode}: {resp.ReasonPhrase}",
+                    $"HTTP {response.StatusCode}: {response.ReasonPhrase}",
                     null,
-                    resp.StatusCode
+                    response.StatusCode
                 );
             }
 
-            await using var s = await resp.Content.ReadAsStreamAsync().ConfigureAwait(false);
+            await using var s = await response
+                .Content.ReadAsStreamAsync()
+                .ConfigureAwait(false);
             return await JsonSerializer.DeserializeAsync<T>(s, JsonOpts).ConfigureAwait(false);
         }
         // A non-success status was logged above; the exception only carries it to the caller.
@@ -204,6 +240,10 @@ public class GelatoStremioProvider(
                 _manifestDue = DateTime.UtcNow + Services.GelatoCache.ManifestRetry;
                 return _manifest;
             }
+
+            // Resources the manifest declared as a bare string ("catalog") inherit the root's
+            // types and id prefixes: the Stremio semantics the deserializer cannot apply alone.
+            LatAdd.StremioResourceConverter.InheritManifestDefaults(m);
 
             StremioCatalog? SearchCatalog(StremioMediaType type) =>
                 m.Catalogs?.Where(c =>
@@ -1013,6 +1053,7 @@ public class StremioManifest
     public List<StremioCatalog> Catalogs { get; set; } = new();
     public List<StremioResource> Resources { get; set; } = new();
     public List<string> Types { get; set; } = new();
+    public List<string> IdPrefixes { get; set; } = new();
     public string? Background { get; set; }
     public string? Logo { get; set; }
     public StremioBehaviorHints? BehaviorHints { get; set; }
@@ -1046,6 +1087,7 @@ public class StremioExtra
     public List<string> Options { get; set; } = new();
 }
 
+[JsonConverter(typeof(LatAdd.StremioResourceConverter))]
 public class StremioResource
 {
     public string Name { get; set; } = "";
@@ -1761,6 +1803,14 @@ public class StremioStream
     public JsonElement? StreamData { get; set; }
 
     /// <summary>
+    /// The other route of this stream's file (its relayed twin's URL, or its node's own): set by
+    /// the fork's version grouping, never by the addon's answer. Played when this row's own URL
+    /// does not start (StreamFailover).
+    /// </summary>
+    [JsonIgnore]
+    public string? FallbackUrl { get; set; }
+
+    /// <summary>
     /// Whether the stream's debrid service has the file (AIOStreams'
     /// <c>streamData.service.cached</c>); null when the stream does not say. A stream that is
     /// not cached answers with the service's short "not cached" clip.
@@ -1858,7 +1908,9 @@ public class StremioStream
         // Some providers attach the same InfoHash to multiple hosters (e.g. Dropload/SuperVideo).
         if (!string.IsNullOrEmpty(Url))
         {
-            key = Url;
+            // The file the URL serves, not the URL itself: signed URLs change their query on
+            // every answer, and a row keyed by the whole URL died with every sync (fork §4.1).
+            key = LatAdd.StreamKeys.StableFileKey(Url) ?? Url;
         }
         else if (!string.IsNullOrEmpty(InfoHash))
         {

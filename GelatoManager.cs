@@ -1742,7 +1742,16 @@ public sealed class GelatoManager(
                 return s;
             })
             .Where(s => s is not null)
+            .Select(s => s!)
             .ToList();
+
+        // LAT-ADD: one version per quality, the permission clips dropped, the relayed twin the
+        // primary URL and the node's own its fallback. Other addons' rows pass through (fork §3.1).
+        acceptable = LatAdd.LatAddStreams.GroupVersions(
+            acceptable,
+            cfg.PreferRelayRoute,
+            _log
+        );
 
         // Get existing streams. A movie's rows only by Stremio id: movies of a collection share
         // the TmdbCollection id, and the other movies' rows would be treated as stale below.
@@ -1899,6 +1908,15 @@ public sealed class GelatoManager(
             if (!string.IsNullOrEmpty(s.BehaviorHints?.Filename))
             {
                 streamItem.SetGelatoData("filename", s.BehaviorHints.Filename);
+            }
+            // The version's other route, played when its own does not start (StreamFailover).
+            if (!string.IsNullOrEmpty(s.FallbackUrl))
+            {
+                streamItem.SetGelatoData("fallbackPath", s.FallbackUrl);
+            }
+            else
+            {
+                streamItem.SetGelatoData<string?>("fallbackPath", null);
             }
             streamItem.SetGelatoData("index", index);
             streamItem.SetGelatoData("guid", streamGuid);

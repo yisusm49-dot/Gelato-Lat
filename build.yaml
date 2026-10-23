@@ -1,17 +1,20 @@
 ---
 name: "Gelato"
 guid: "94EA4E14-8163-4989-96FE-0A2094BC2D6A"
-version: "0.26.28.0"
+version: "0.26.50.0"
 targetAbi: "12.1.0.0"
 framework: "net10.0"
 owner: "lstb1t"
 artifacts:
   - "Gelato.dll"
-overview: "Stremio addons as Jellyfin library items: search, catalogs and on-demand streams through AIOStreams."
+overview: "Stremio addons as Jellyfin library items: search, catalogs and on-demand streams. Fork for the LAT-ADD addon: direct manifest import, one version per quality, relay-first playback."
 description: >
-  Gelato brings AIOStreams (Stremio addons) into Jellyfin. Search results and imported catalogs show up as regular movies and series, and streams are resolved when you press play and proxied through Jellyfin.
+  Fork of Gelato for the LAT-ADD Stremio addon: short-form manifest resources, one version per quality with the relay route preferred and the node's own as fallback, stable version identities across signed-URL syncs, and large-catalog import options.
 category: "General"
 # The card in the plugin catalog; Jellyfin downloads it when it reads the repository.
 imageUrl: "https://raw.githubusercontent.com/lostb1t/Gelato/main/banner.png"
 changelog: >
-  changelog
+  LAT-ADD fork: manifest resources in short form, versions merged per quality (relay first,
+  node fallback), stable stream GUIDs across syncs, expired signed URLs re-synced instead of
+  failed over, large-catalog import (CatalogMaxItems 2000, ImportPeople, LazyImages by
+  default, retry with backoff), Gelato-LAT-ADD User-Agent.

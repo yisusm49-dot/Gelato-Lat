@@ -19,6 +19,12 @@ public static class MetaPeople
     {
         var people = new List<PersonInfo>();
 
+        // The people are the largest cost of an import, and a library browsed by titles works
+        // without them: off, or capped to the first N, by configuration (fork §3.4).
+        var cfg = GelatoPlugin.Instance?.Configuration;
+        if (cfg?.ImportPeople == false)
+            return people;
+
         var cast = meta.App_Extras?.Cast;
         if (cast is { Count: > 0 })
         {
@@ -46,6 +52,10 @@ public static class MetaPeople
 
         AddCrew(people, meta.App_Extras?.Directors, meta.Director, PersonKind.Director);
         AddCrew(people, meta.App_Extras?.Writers, meta.Writer, PersonKind.Writer);
+
+        var limit = cfg?.PeopleLimit ?? 0;
+        if (limit > 0 && people.Count > limit)
+            people.RemoveRange(limit, people.Count - limit);
 
         for (var i = 0; i < people.Count; i++)
             people[i].SortOrder = i;

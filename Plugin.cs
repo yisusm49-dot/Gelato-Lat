@@ -43,10 +43,11 @@ public class GelatoPlugin : BasePlugin<PluginConfiguration>, IHasWebPages
     public static GelatoPlugin? Instance { get; private set; }
 
     /// <summary>
-    /// The User-Agent Gelato sends to addons and RemuxDB: <c>Gelato/&lt;version&gt;</c>.
+    /// The User-Agent Gelato sends to addons and RemuxDB. The fork names itself apart, so its
+    /// traffic can be told from upstream Gelato's in the nodes' logs (fork §4.3).
     /// </summary>
     public static string UserAgent { get; } =
-        $"Gelato/{typeof(GelatoPlugin).Assembly.GetName().Version?.ToString() ?? "0"}";
+        $"Gelato-LAT-ADD/{typeof(GelatoPlugin).Assembly.GetName().Version?.ToString() ?? "0"}";
 
     // Event fired when the plugin configuration is updated via UpdateConfiguration
     public static new event Action<PluginConfiguration>? ConfigurationChanged;

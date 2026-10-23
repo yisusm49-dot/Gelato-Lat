@@ -4,7 +4,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>Gelato</AssemblyName>
-    <Version>0.26.28.0</Version>
+    <Version>0.26.50.0</Version>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
@@ -16,6 +16,10 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="System.Reflection.TypeExtensions" Version="4.7.0" />
     <PackageReference Include="Microsoft.Data.Sqlite.Core" Version="10.0.0" PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- The fork's test project: built by its own csproj, kept out of the plugin's. -->
+    <Compile Remove="Gelato.Tests\**" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Config\config.html" />

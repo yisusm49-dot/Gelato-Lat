@@ -18,8 +18,30 @@ public class PluginConfiguration : BasePluginConfiguration
     /// </summary>
     public string BasePath { get; set; } = "";
     public int StreamTTL { get; set; } = 3600;
-    public int CatalogMaxItems { get; set; } = 100;
+    public int CatalogMaxItems { get; set; } = 2000;
     public string Url { get; set; } = "";
+
+    /// <summary>
+    /// LAT-ADD's relayed routes first, with the node's own URL as each version's fallback (fork
+    /// §3.2). The 4K tier is never relayed: it plays from its node either way.
+    /// </summary>
+    public bool PreferRelayRoute { get; set; } = true;
+
+    /// <summary>
+    /// Whether a title's people (cast, directors, writers) are saved. The people are the largest
+    /// cost of an import - in time, database rows and images - and a library browsed by titles
+    /// does not need them (fork §3.4).
+    /// </summary>
+    public bool ImportPeople { get; set; } = true;
+
+    /// <summary>How many of a title's people to save, first come first saved. 0 means all.</summary>
+    public int PeopleLimit { get; set; } = 0;
+
+    /// <summary>
+    /// How many metas the catalog import asks the addon for at once (fork §3.4). The addon's
+    /// nodes are small: more parallelism is not faster, only harsher on them.
+    /// </summary>
+    public int MetaConcurrency { get; set; } = 4;
     public bool EnableMixed { get; set; } = false;
     public bool ExtendLocalSeriesTrees { get; set; } = false;
     public bool FilterUnreleased { get; set; } = false;
@@ -43,7 +65,7 @@ public class PluginConfiguration : BasePluginConfiguration
     /// </summary>
     public bool RefreshVersionsAfterProbe { get; set; } = true;
 
-    public bool LazyImages { get; set; } = false;
+    public bool LazyImages { get; set; } = true;
 
     /// <summary>
     /// A person's page also lists the person's films and series the library does not hold, from
@@ -251,6 +273,10 @@ public class UserConfig
             // All other fields from base config
             StreamTTL = baseConfig.StreamTTL,
             CatalogMaxItems = baseConfig.CatalogMaxItems,
+            PreferRelayRoute = baseConfig.PreferRelayRoute,
+            ImportPeople = baseConfig.ImportPeople,
+            PeopleLimit = baseConfig.PeopleLimit,
+            MetaConcurrency = baseConfig.MetaConcurrency,
             EnableMixed = baseConfig.EnableMixed,
             ExtendLocalSeriesTrees = baseConfig.ExtendLocalSeriesTrees,
             FilterUnreleased = baseConfig.FilterUnreleased,

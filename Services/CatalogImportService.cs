@@ -212,7 +212,9 @@ public class CatalogImportService(
                         batch,
                         new ParallelOptions
                         {
-                            MaxDegreeOfParallelism = 4,
+                            // Configurable: the addon's nodes are small, and more parallelism
+                            // than they take is not faster, only harsher on them (fork §3.4).
+                            MaxDegreeOfParallelism = Math.Max(1, cfg.MetaConcurrency),
                             CancellationToken = ct,
                         },
                         async (meta, innerCt) =>
