@@ -20,7 +20,7 @@ public sealed class ManifestFacts
     // The manifest as LAT-ADD serves it: "catalog" as a bare string, meta and stream as objects.
     private const string LatAddManifest = """
         {
-          "id": "lat-add.lzid.me",
+          "id": "lat-add.example.com",
           "name": "LAT-ADD",
           "version": "0.26.3",
           "resources": [
@@ -96,13 +96,13 @@ public sealed class ManifestFacts
 public sealed class StreamKeyFacts
 {
     private const string Direct =
-        "https://node5.lat-add.com/media/ngmovfile_0OiEXfUPbuSG-yOR/video.mkv?sig=AAAA&exp=1790000000&uid=7";
+        "https://node5.example.com/media/ngmovfile_0OiEXfUPbuSG-yOR/video.mkv?sig=AAAA&exp=1790000000&uid=7";
 
     private const string RelayTwin =
-        "https://relay1.lat-add.com/node5.lat-add.com/media/ngmovfile_0OiEXfUPbuSG-yOR/video.mkv?sig=BBBB&exp=1790000100&uid=7";
+        "https://relay.example.com/node5.example.com/media/ngmovfile_0OiEXfUPbuSG-yOR/video.mkv?sig=BBBB&exp=1790000100&uid=7";
 
     private const string OtherFile =
-        "https://node4.lat-add.com/media/ngmovfile_HupSgoQvrPJe9KjV/video.mkv?sig=CCCC&exp=1790000000&uid=7";
+        "https://node4.example.com/media/ngmovfile_HupSgoQvrPJe9KjV/video.mkv?sig=CCCC&exp=1790000000&uid=7";
 
     [Fact]
     public void DirectAndRelayTwins_ShareTheFileKey()
@@ -137,7 +137,7 @@ public sealed class StreamKeyFacts
         var second = new StremioStream { Url = RelayTwin };
         var third = new StremioStream
         {
-            Url = "https://node5.lat-add.com/media/ngmovfile_0OiEXfUPbuSG-yOR/video.mkv?sig=DDDD&exp=1790099999&uid=7",
+            Url = "https://node5.example.com/media/ngmovfile_0OiEXfUPbuSG-yOR/video.mkv?sig=DDDD&exp=1790099999&uid=7",
         };
 
         Assert.Equal(first.GetGuid(), second.GetGuid());
@@ -159,13 +159,13 @@ public sealed class StreamKeyFacts
     [Fact]
     public void Expiry_ReadsTheExpParameter()
     {
-        var past = $"https://node4.lat-add.com/media/x/video.mkv?exp={DateTimeOffset.UtcNow.AddHours(-1).ToUnixTimeSeconds()}";
-        var future = $"https://node4.lat-add.com/media/x/video.mkv?exp={DateTimeOffset.UtcNow.AddHours(5).ToUnixTimeSeconds()}";
+        var past = $"https://node4.example.com/media/x/video.mkv?exp={DateTimeOffset.UtcNow.AddHours(-1).ToUnixTimeSeconds()}";
+        var future = $"https://node4.example.com/media/x/video.mkv?exp={DateTimeOffset.UtcNow.AddHours(5).ToUnixTimeSeconds()}";
 
         Assert.True(StreamKeys.Expired(past));
         Assert.False(StreamKeys.Expired(future));
-        Assert.False(StreamKeys.Expired("https://node4.lat-add.com/media/x/video.mkv"));
-        Assert.Null(StreamKeys.Expiry("https://node4.lat-add.com/media/x/video.mkv"));
+        Assert.False(StreamKeys.Expired("https://node4.example.com/media/x/video.mkv"));
+        Assert.Null(StreamKeys.Expiry("https://node4.example.com/media/x/video.mkv"));
     }
 }
 
@@ -192,25 +192,25 @@ public sealed class VersionGroupingFacts
         Row(
             "⛔ LAT-ADD\n4K",
             "Akira (1988)\n4K sin permiso para esta cuenta",
-            "https://node4.lat-add.com/media/ngmovfile_denied/clip.mp4?sig=X&exp=1790000000&uid=7",
+            "https://node4.example.com/media/ngmovfile_denied/clip.mp4?sig=X&exp=1790000000&uid=7",
             "lat-add-local-directplay-denied"
         ),
         Row(
             "🔀 LAT-ADD\n4K",
             "Akira (1988)\n4K | BluRay | Dolby Vision | HDR10+ | Dolby Atmos | H.265 | Latino\n💾 58 GB",
-            "https://node4.lat-add.com/media/ngmovfile_HupSgoQvrPJe9KjV/video.mkv?sig=A&exp=1790000000&uid=7",
+            "https://node4.example.com/media/ngmovfile_HupSgoQvrPJe9KjV/video.mkv?sig=A&exp=1790000000&uid=7",
             "lat-add-local-directplay-4k"
         ),
         Row(
             "🔀 LAT-ADD\n1080p",
             "Akira (1988)\n1080p | WEB-DL | H.264 | Latino\n💾 6.0 GB",
-            "https://tiger.lzid.me:8443/media/ngmovfile_0OiEXfUPbuSG-yOR/video.mkv?sig=B&exp=1790000000&uid=7",
+            "https://tiger.example.com:8443/media/ngmovfile_0OiEXfUPbuSG-yOR/video.mkv?sig=B&exp=1790000000&uid=7",
             "lat-add-local-directplay-1080"
         ),
         Row(
             "⚡ LAT-ADD\n1080p",
             "Akira (1988)\n1080p | WEB-DL | H.264 | Latino\n💾 6.0 GB\n⚡ Ruta alterna: úsala si el directo se traba",
-            "https://relay1.lat-add.com/tiger.lzid.me:8443/media/ngmovfile_0OiEXfUPbuSG-yOR/video.mkv?sig=C&exp=1790000000&uid=7",
+            "https://relay.example.com/tiger.example.com:8443/media/ngmovfile_0OiEXfUPbuSG-yOR/video.mkv?sig=C&exp=1790000000&uid=7",
             "lat-add-local-directplay-1080-relay"
         ),
     ];
@@ -250,9 +250,9 @@ public sealed class VersionGroupingFacts
         var versions = LatAddStreams.GroupVersions(AkiraAnswer(), preferRelay: true);
         var v1080 = versions[1];
 
-        Assert.StartsWith("https://relay1.lat-add.com/", v1080.Url);
+        Assert.StartsWith("https://relay.example.com/", v1080.Url);
         Assert.Equal(
-            "https://tiger.lzid.me:8443/media/ngmovfile_0OiEXfUPbuSG-yOR/video.mkv?sig=B&exp=1790000000&uid=7",
+            "https://tiger.example.com:8443/media/ngmovfile_0OiEXfUPbuSG-yOR/video.mkv?sig=B&exp=1790000000&uid=7",
             v1080.FallbackUrl
         );
         // The 4K tier is never relayed: no twin, no fallback.
@@ -265,8 +265,8 @@ public sealed class VersionGroupingFacts
         var versions = LatAddStreams.GroupVersions(AkiraAnswer(), preferRelay: false);
         var v1080 = versions[1];
 
-        Assert.StartsWith("https://tiger.lzid.me:8443/", v1080.Url);
-        Assert.StartsWith("https://relay1.lat-add.com/", v1080.FallbackUrl);
+        Assert.StartsWith("https://tiger.example.com:8443/", v1080.Url);
+        Assert.StartsWith("https://relay.example.com/", v1080.FallbackUrl);
     }
 
     [Fact]
@@ -317,7 +317,7 @@ public sealed class VersionGroupingFacts
             Row(
                     "⚡ LAT-ADD\n1080p",
                     "Akira (1988)\n1080p | WEB-DL",
-                    "https://relay1.lat-add.com/tiger.lzid.me:8443/media/ngmovfile_0OiEXfUPbuSG-yOR/video.mkv?sig=NEW&exp=1795555555&uid=7"
+                    "https://relay.example.com/tiger.example.com:8443/media/ngmovfile_0OiEXfUPbuSG-yOR/video.mkv?sig=NEW&exp=1795555555&uid=7"
                 )
                 .GetGuid()
         );

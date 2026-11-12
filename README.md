@@ -1,92 +1,106 @@
-> [!IMPORTANT]
-> **This is the LAT-ADD fork (Gelato-Lat).** It keeps upstream's plugin GUID on purpose, so a
-> server must not load both repositories at once — remove the original's repository before
-> installing from this one. Versioning, install steps and recommended settings:
-> **[FORK.md](FORK.md)**.
-
-> [!NOTE]
-> Looking for the next evolution of Gelato?
-> Check out [Remux](https://github.com/lostb1t/remux), a media server written in Rust that replaces Jellyfin instead of plugging into it. It supports local libraries, remote sources, and Stremio addons, and it works with your Jellyfin clients.
-
 <div align="center">
    <img width="125" src="logo.png" alt="Logo">
 </div>
 
 <div align="center">
-  <h1><b>Gelato</b></h1>
-  <p><i>Jellyfin Stremio Integration Plugin</i></p>
+  <h1><b>Gelato-Lat</b></h1>
+  <p><i>Fork de Gelato para el addon LAT-ADD</i></p>
 </div>
 
-Gelato brings your AIOStreams addon into Jellyfin. Jellyfin's search also finds what the addon offers, and the catalogs you pick are imported into your library on a schedule. Their titles behave like your own media: you browse, search, and play them in any Jellyfin client.
+> [!IMPORTANT]
+> Este es el **fork LAT-ADD** de [Gelato](https://github.com/lostb1t/Gelato). Mantiene el GUID
+> del original a propósito (para conservar la configuración y los ítems ya importados), así que
+> un servidor **no debe cargar los dos repositorios de plugins a la vez**: quita primero el del
+> original (ver [Instalación](#instalación)). Detalle completo, versionado y valores
+> recomendados: **[FORK.md](FORK.md)**.
 
-<a href="https://discord.gg/rEbhk4RBhs">
-    <img src="https://img.shields.io/badge/Talk%20on-Discord-brightgreen">
-</a>
+## Qué es
 
-### Features
-- **Search**: Jellyfin's search also finds titles from the addon, ready to play.
-- **Catalogs**: import the addon's catalogs into your library, kept up to date by a scheduled task.
-- **Streams on demand**: Gelato finds the streams when you press play. Nothing is downloaded.
-- **Like your own media**: the titles are regular Jellyfin library items.
-- **Proxy**: streams go through Jellyfin, so your debrid service sees a single IP.
-- **Per-user settings**: a user can have their own addon, for example for a kids' account.
-- **Seerr requests**: a request approved in Seerr (Jellyseerr, Overseerr) adds the title to your library.
+Gelato lleva addons de Stremio a Jellyfin: los catálogos que elijas se importan como una
+biblioteca normal, y el stream se resuelve al dar play — **no se descarga nada**. Este fork está
+afinado para **LAT-ADD**, el addon que sirve video directo por HTTP desde su red de nodos:
 
-## Usage
+- El manifest de LAT-ADD se lee **directo** (sin AIOStreams en el medio).
+- Cada calidad aparece **una sola vez**: las rutas gemelas del relay (⚡) se fusionan en la
+  misma versión, con nombre limpio (`1080p · WEB-DL · Latino · 6.0 GB`).
+- La ruta del **relay se prefiere** y la del nodo queda como respaldo automático.
+- Las versiones **sobreviven a las sincronizaciones** (las URLs firmadas cambian, la versión no).
 
-1. Set up AIOStreams. Host it yourself or use a public instance, for example the [ElfHosted public instance](https://aiostreams.elfhosted.com/stremio/configure).
-   
-   New to debrid? Sign up with one of my <a href="https://github.com/lostb1t/Gelato?tab=readme-ov-file#support-me">referrals</a>.
-   
-   You need at least the **TMDB addon** turned on for search, and one addon that finds streams (Comet, for example).
-   Or import the [starter config](aiostreams-config.json), then turn on your debrid providers under **Services**.
+## Requisitos
 
-2. On Jellyfin 12, add `https://raw.githubusercontent.com/lostb1t/Gelato/refs/heads/gh-pages/repository.json` to your plugin repositories.
+- **Jellyfin 12.1 o mayor** (`targetAbi 12.1.0.0`, sigue al original). En un servidor con
+  Jellyfin 12.0 el plugin no aparece instalable: actualizar el servidor (recomendado 12.2).
+- Un addon LAT-ADD con su URL de manifest, y al menos un catálogo (`Movies` / `Series`).
 
-   **Upgrading from Jellyfin 10.11?** First update Gelato to its final 10.11 release, and shut the server down normally at least once before you upgrade Jellyfin. That release empties the Gelato folders on shutdown; without it, the first Jellyfin 12 start deletes every Gelato title. Its settings page shows whether your server is ready. If you upgraded without it, Gelato runs the **Repair watch state** task once on the first start and brings back every title that still has watch state (see the FAQ).
+## Instalación
 
-3. Install the plugin and open its settings. The **Setup assistant** walks you through the addon, the libraries, and the catalogs.
-   Gelato supports only **AIOStreams**.
+1. **Quita el repositorio del Gelato original** en *Panel → Plugins → Repositorios*. Con ambos
+   cargados y el mismo GUID, Jellyfin instalaría la versión más alta de cualquiera de los dos.
+2. Añade el repositorio de este fork:
 
-   To change the libraries later, use **Default movies library** and **Default series library** on the **Libraries** tab. Pick a library you have and save, and Gelato adds a folder of its own to it. Or pick **New library**: Gelato creates the folder, and **Copy folder** gives you its path for Jellyfin's library dialog.
+   ```
+   https://raw.githubusercontent.com/yisusm49-dot/Gelato-Lat/gh-pages/repository.json
+   ```
 
-4. In Jellyfin, check each library's settings: **Gelato** should be first under the metadata downloaders and image fetchers. Gelato doesn't change the settings of a library you had before, so turn it on there yourself.
+3. Instala/actualiza **Gelato** desde *Panel → Plugins → Catálogos* y reinicia si Jellyfin lo
+   pide.
 
-5. Search for a movie and play it. Or run the **Import Catalogs** task to fill your library.
+## Configuración con LAT-ADD
 
-For a step-by-step guide, see the [setup guide](https://github.com/lostb1t/Gelato/discussions/40).
+1. En los ajustes del plugin, pega la URL del manifest de tu addon:
 
-## Seerr requests
+   ```
+   https://<host-de-tu-addon>/<token>/manifest.json
+   ```
 
-Gelato adds titles requested in Seerr (Jellyseerr, Overseerr). The Gelato settings show the fields below on the **Libraries** tab, each with a **Copy** button. In Seerr, go to **Settings > Notifications > Webhook**:
+   El **token** viaja en el path y es tu clave de acceso: no lo compartas ni lo publiques.
 
-- **Webhook URL:** `http://<your-jellyfin>:8096/gelato/seerr`
-- **Authorization Header:** `MediaBrowser Token="<API key>"`, with a key from Jellyfin's **Dashboard > API Keys**
-- **JSON Payload:** leave the default
-- **Notification Types:** Request Approved and Request Automatically Approved
+2. Activa los catálogos **Movies** y **Series** (los de anime, kdrama y `recent_*` son
+   subconjuntos de esos dos).
+3. En la tarjeta **LAT-ADD** de los ajustes, revisa las opciones del fork. Valores recomendados
+   para la biblioteca completa:
 
-An approved request adds the movie or series to your library, and Seerr marks it available at its next Jellyfin scan. If the requester has libraries of their own on Gelato's **Users** tab, the title goes there. A series request adds the whole series, also when it named only some seasons.
+   | Opción | Valor |
+   |---|---|
+   | `PreferRelayRoute` | activado |
+   | `ImportPeople` | desactivado (o `PeopleLimit` 10–15) |
+   | `LazyImages` | activado |
+   | `CatalogMaxItems` | 2000 |
+   | `MetaConcurrency` | 4 |
+   | `PlaybackFailover` | activado (relay → nodo) |
 
-## Notes
+4. Corre la tarea **Import Catalogs** en *Panel → Tareas programadas*. La primera corrida es la
+   larga (metas, temporadas, personas); las siguientes solo procesan novedades.
 
-- Gelato supports only **AIOStreams**.
+## Qué cambia respecto al original
 
-### FAQ
+| Área | Cambio |
+|---|---|
+| Manifest | `resources` se acepta en forma corta (string) u objeto; un string hereda `types`/`idPrefixes` del manifest raíz. |
+| Identidad | La versión se identifica por el path del archivo (`/media/<id>/<archivo>`), no por la URL firmada. |
+| Versiones | Una por calidad: gemelas ⚡ fusionadas, relay primero con el nodo de respaldo, clips `⛔` descartados, `bingeGroup` sin `-relay`. |
+| Vencimiento | URL vencida (6 h) → re-sync de los streams del título (máx. 10 s) y reintento con firma fresca. |
+| Import | `CatalogMaxItems` 2000, `LazyImages` on, `ImportPeople`/`PeopleLimit`, `MetaConcurrency`, reintentos con backoff ante 429/5xx. |
+| Identificación | User-Agent `Gelato-LAT-ADD/<versión>` en el tráfico hacia el addon. |
 
-- After you change your config in AIOStreams, save it there, then select **Refresh** on the **Catalogs** tab of the Gelato settings. Gelato reads the addon again; you don't need to restart, also not after changing Gelato's settings.
-- Turn on at least 1 catalog that supports search in AIOStreams. I suggest the TMDB addon.
-- To start over, run the **WARNING: purge all gelato items** task in **Dashboard > Scheduled Tasks**. It removes the watch state along with the titles, so it's a real fresh start.
-- Removing a title doesn't lose its watch state. Jellyfin keeps it, and Gelato puts it back when the title returns, so a movie you delete and add again later still has your progress.
-- If titles went missing and took your watch state with them (after a Jellyfin 12 upgrade, for example), run the **Repair watch state** task in **Dashboard > Scheduled Tasks**. It imports what's gone again and gives it back its watch state. It has no schedule: it can't tell what you deleted on purpose from what you lost by accident, so it runs only when you start it, and it also brings back titles you deleted yourself. Gelato also runs it once on the first start after you install this release, and after every later major Jellyfin upgrade. Don't run Jellyfin's own **User data cleanup task** first: that task deletes the kept watch state.
-- I suggest a lower timeout for your Stremio addons in AIOStreams, for example 5 seconds.
-- Debridio TMDB and Debridio TVDB cause problems. I suggest the regular TMDB addon.
-- To clear the stream cache, save Gelato's settings: the next visit of a title asks the addon for its streams again.
-- A catalog can import into a library of its own, for example an Anime or Documentaries library: use the **Library** column on the **Catalogs** tab. Pick a library you have and save, and Gelato adds a folder of its own to it. For a new one, pick **New library**: Gelato creates the folder, and you add a library with it in Jellyfin (Jellyfin needs a folder for a new library). At the next import, new titles go there, and the titles the catalog imported before move there with their watch state. A title that 2 catalogs list stays with the one that imported it first. A movies library takes only the catalog's movies, and a shows library only its series; the rest goes to the default library. Set the catalog back to **Default** to move its titles back. A search inside such a library also asks the addon, and a result you open from it goes into that library.
-- Opening a search result adds it to your library. With **Keep opened search results out of the library until played** on (on the **Search** tab), it stays out of the library, the home screen rows, and the counts until someone plays it, marks it as a favorite, likes it (a watchlist), or adds it to a collection or playlist. Search still finds it. If nobody does within 5 days, Gelato removes it again.
+El detalle técnico, el esquema de versiones del fork (`<base-upstream>.<1000+n>`) y el
+mantenimiento están en **[FORK.md](FORK.md)**.
 
-### ❤️ Support the Project
+## Desarrollo y pruebas
 
-- ⭐ **[Star the repository](https://github.com/lostb1t/Gelato)** on GitHub.
-- 🤝 **Contribute**: Report issues, suggest features, or submit pull requests.
-- ☕ **Donate**:
-  - **[Ko-fi](https://ko-fi.com/lostb1t)**
+```
+dotnet build -c Release     # el plugin
+dotnet test                 # Gelato.Tests: 18 pruebas
+```
+
+Las pruebas cubren el manifest, la identidad estable de versiones, la fusión de gemelas y los
+casos borde del failover, sin necesitar un servidor.
+
+## Créditos
+
+Fork de **[lostb1t/Gelato](https://github.com/lostb1t/Gelato)**, bajo licencia **GPL-3.0**
+(ver [LICENSE](LICENSE)). Gracias al autor original por la base y por mantener el proyecto
+vivo; este fork solo agrega lo necesario para LAT-ADD.
+
+Los cambios genéricos de este fork (manifest en forma corta, identidad de versión sin query)
+están pensados para proponerse al proyecto original como pull requests.
