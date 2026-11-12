@@ -30,37 +30,37 @@ public sealed class StremioResourceConverter : JsonConverter<StremioResource>
                 return new StremioResource { Name = reader.GetString() ?? "" };
 
             case JsonTokenType.StartObject:
-            {
-                var resource = new StremioResource();
-                while (reader.Read() && reader.TokenType != JsonTokenType.EndObject)
                 {
-                    if (reader.TokenType != JsonTokenType.PropertyName)
+                    var resource = new StremioResource();
+                    while (reader.Read() && reader.TokenType != JsonTokenType.EndObject)
                     {
-                        reader.Skip();
-                        continue;
-                    }
-
-                    var property = reader.GetString();
-                    reader.Read();
-                    switch (property?.ToLowerInvariant())
-                    {
-                        case "name":
-                            resource.Name = ReadStringOrSkip(ref reader);
-                            break;
-                        case "types":
-                            resource.Types = ReadStringList(ref reader);
-                            break;
-                        case "idprefixes":
-                            resource.IdPrefixes = ReadStringList(ref reader);
-                            break;
-                        default:
+                        if (reader.TokenType != JsonTokenType.PropertyName)
+                        {
                             reader.Skip();
-                            break;
-                    }
-                }
+                            continue;
+                        }
 
-                return resource;
-            }
+                        var property = reader.GetString();
+                        reader.Read();
+                        switch (property?.ToLowerInvariant())
+                        {
+                            case "name":
+                                resource.Name = ReadStringOrSkip(ref reader);
+                                break;
+                            case "types":
+                                resource.Types = ReadStringList(ref reader);
+                                break;
+                            case "idprefixes":
+                                resource.IdPrefixes = ReadStringList(ref reader);
+                                break;
+                            default:
+                                reader.Skip();
+                                break;
+                        }
+                    }
+
+                    return resource;
+                }
 
             default:
                 reader.Skip();
