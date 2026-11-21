@@ -71,6 +71,8 @@ afinado para **LAT-ADD**, el addon que sirve video directo por HTTP desde su red
 
 4. Corre la tarea **Import Catalogs** en *Panel → Tareas programadas*. La primera corrida es la
    larga (metas, temporadas, personas); las siguientes solo procesan novedades.
+   Después corre sola cada día a las 4:00 (hora del servidor), así lo que se sube al addon
+   aparece sin hacer nada; el horario se cambia en la misma pantalla.
 
 ## Qué cambia respecto al original
 
