@@ -14,7 +14,16 @@ public sealed class GelatoCatalogItemsSyncTask(
     public string Description => "Imports items from enabled Stremio catalogs into Jellyfin.";
     public string Category => "Gelato";
 
-    public IEnumerable<TaskTriggerInfo> GetDefaultTriggers() => [];
+    // Daily, off-peak: new titles uploaded to the addon show up without a manual run.
+    // Runs after the first one only process what changed, so a daily run is cheap.
+    public IEnumerable<TaskTriggerInfo> GetDefaultTriggers() =>
+        [
+            new TaskTriggerInfo
+            {
+                Type = TaskTriggerInfoType.DailyTrigger,
+                TimeOfDayTicks = TimeSpan.FromHours(4).Ticks,
+            },
+        ];
 
     public async Task ExecuteAsync(IProgress<double> progress, CancellationToken ct)
     {
