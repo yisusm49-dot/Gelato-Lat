@@ -9,6 +9,14 @@
     "owner": "lstb1t",
     "versions": [
       {
+        "changelog": "Import Catalogs corre sola cada día a las 4:00 (hora del servidor): lo que se sube al addon llega a la biblioteca sin correrla a mano. Un horario ya guardado se conserva (#13).",
+        "checksum": "ec5d0efd0187496668d7efb7bf183573",
+        "sourceUrl": "https://github.com/yisusm49-dot/Gelato-Lat/releases/download/v0.26.28.1001/gelato_0.26.28.1001.zip",
+        "targetAbi": "12.1.0.0",
+        "timestamp": "2026-11-21T19:17:37Z",
+        "version": "0.26.28.1001"
+      },
+      {
         "changelog": "Primera versión con la numeración del fork (<base-upstream>.<1000+n>), que el original nunca puede pisar (#2).\n\n- #3: la llave estable de stream solo para URLs /media/; otro addon conserva la URL completa como identidad\n- #4: ExpiredRow mira solo la URL que falló; relay caído con respaldo vencido hace failover, no loop de re-sync\n- #5: la re-sync por URL vencida espera máximo 10 s y nunca cuelga el play\n- #6: tarjeta LAT-ADD en la página de ajustes (PreferRelayRoute, ImportPeople, PeopleLimit, MetaConcurrency) y FORK.md con valores recomendados\n\nRequiere Jellyfin 12.1+ (ver issue #1 para el servidor en 12.0). 18 pruebas automáticas en verde.",
         "checksum": "8d0abd093db2e68a0163ad9199ec5ac4",
         "sourceUrl": "https://github.com/yisusm49-dot/Gelato-Lat/releases/download/v0.26.28.1000/gelato_0.26.28.1000.zip",
