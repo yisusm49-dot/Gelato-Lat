@@ -74,6 +74,9 @@ public static partial class LatAddStreams
         {
             var relay = group.FirstOrDefault(IsRelay);
             var direct = group.FirstOrDefault(s => !IsRelay(s));
+            var unused = group.Count - (relay is null ? 0 : 1) - (direct is null ? 0 : 1);
+            if (unused > 0)
+                log?.LogDebug("LAT-ADD: dropped {Count} duplicate row(s) of one file", unused);
 
             StremioStream primary;
             if (preferRelay && relay is not null)
@@ -223,7 +226,9 @@ public static partial class LatAddStreams
     /// </summary>
     private sealed class LinkedStringMap<TValue> : IEnumerable<KeyValuePair<string, TValue>>
     {
-        private readonly Dictionary<string, TValue> _map = new(StringComparer.OrdinalIgnoreCase);
+        // Ordinal: the key is the node's /media/<fileId>/… path, the same bytes in relay and node
+        // twins, and case-sensitive on the node, so files differing only by case stay apart.
+        private readonly Dictionary<string, TValue> _map = new(StringComparer.Ordinal);
         private readonly List<string> _order = new();
 
         public TValue this[string key]
