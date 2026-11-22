@@ -185,6 +185,29 @@ public sealed class VersionGroupingFacts
             BehaviorHints = bingeGroup is null ? null : new StremioBehaviorHints { BingeGroup = bingeGroup },
         };
 
+    [Fact]
+    public void FilesThatDifferOnlyInCase_StayTwoVersions()
+    {
+        // Node paths are case-sensitive and the grouping key is the path: two files, two versions.
+        var rows = new List<StremioStream>
+        {
+            Row(
+                "LAT-ADD\n1080p",
+                "Movie (2020)\n1080p | WEB-DL",
+                "https://node5.example.com/media/ngmovfile_ABC/video.mkv?sig=A&exp=1790000000&uid=7"
+            ),
+            Row(
+                "LAT-ADD\n1080p",
+                "Movie (2020)\n1080p | WEB-DL",
+                "https://node5.example.com/media/ngmovfile_abc/video.mkv?sig=B&exp=1790000000&uid=7"
+            ),
+        };
+
+        var versions = LatAddStreams.GroupVersions(rows, preferRelay: false);
+
+        Assert.Equal(2, versions.Count);
+    }
+
     // Akira as the addon answers it: a 4K row (never relayed), a 1080p row, its relayed twin
     // underneath, and the permission clip of a 4K the account may not watch.
     private static List<StremioStream> AkiraAnswer() =>
