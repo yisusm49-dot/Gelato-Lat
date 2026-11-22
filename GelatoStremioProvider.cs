@@ -24,6 +24,8 @@ public class GelatoStremioProvider(
     };
 
     private static readonly TimeSpan MetaCacheTtl = TimeSpan.FromMinutes(5);
+    // Retry-After is honoured up to this: an addon asking for an hour is not waited for.
+    private static readonly TimeSpan MaxRetryDelay = TimeSpan.FromSeconds(30);
     private readonly System.Collections.Concurrent.ConcurrentDictionary<
         string,
         (StremioMeta Meta, DateTime Expiry)
@@ -80,7 +82,17 @@ public class GelatoStremioProvider(
         return url;
     }
 
-    private async Task<T?> GetJsonAsync<T>(string url, string? userAgent = null)
+    /// <summary>The wait before retry <paramref name="attempt"/>: the addon's Retry-After, capped.</summary>
+    public static TimeSpan RetryDelay(TimeSpan? retryAfter, int attempt) =>
+        retryAfter is { } delta && delta > TimeSpan.Zero
+            ? (delta < MaxRetryDelay ? delta : MaxRetryDelay)
+            : TimeSpan.FromMilliseconds(500 * attempt);
+
+    private async Task<T?> GetJsonAsync<T>(
+        string url,
+        string? userAgent = null,
+        CancellationToken cancellationToken = default
+    )
     {
         // The base URL carries the user's addon config, so only the resource after it is logged.
         var resource = url.StartsWith(baseUrl, StringComparison.Ordinal)
@@ -104,7 +116,9 @@ public class GelatoStremioProvider(
                 using var request = new HttpRequestMessage(HttpMethod.Get, url);
                 if (userAgent is not null)
                     request.Headers.UserAgent.ParseAdd(userAgent);
-                resp = await c.SendAsync(request).ConfigureAwait(false); // No using statement
+                resp = await c
+                    .SendAsync(request, cancellationToken)
+                    .ConfigureAwait(false); // No using statement
 
                 if (resp.IsSuccessStatusCode || attempt >= 3)
                     break;
@@ -117,9 +131,7 @@ public class GelatoStremioProvider(
                 )
                     break;
 
-                var delay = TimeSpan.FromMilliseconds(500 * attempt);
-                if (resp.Headers.RetryAfter?.Delta is { } delta && delta > TimeSpan.Zero)
-                    delay = delta;
+                var delay = RetryDelay(resp.Headers.RetryAfter?.Delta, attempt);
 
                 log.LogDebug(
                     "GetJsonAsync: {Resource} answered {Status}, retrying in {Delay}ms (attempt {Attempt})",
@@ -129,7 +141,7 @@ public class GelatoStremioProvider(
                     attempt
                 );
                 resp.Dispose();
-                await Task.Delay(delay).ConfigureAwait(false);
+                await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
             }
 
             using var response = resp;
@@ -151,9 +163,16 @@ public class GelatoStremioProvider(
             }
 
             await using var s = await response
-                .Content.ReadAsStreamAsync()
+                .Content.ReadAsStreamAsync(cancellationToken)
                 .ConfigureAwait(false);
-            return await JsonSerializer.DeserializeAsync<T>(s, JsonOpts).ConfigureAwait(false);
+            return await JsonSerializer
+                .DeserializeAsync<T>(s, JsonOpts, cancellationToken)
+                .ConfigureAwait(false);
+        }
+        // The caller gave up (a timeout): that is not an error, so it is not logged as one.
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
         }
         // A non-success status was logged above; the exception only carries it to the caller.
         catch (Exception ex) when (ex is not HttpRequestException { StatusCode: not null })
@@ -920,7 +939,7 @@ public class GelatoStremioProvider(
 
     /// <summary>
     /// Asks for a title's streams before anything needs them, for the next
-    /// <see cref="GetStreamsAsync(StremioUri)"/> of the same title to take. Whoever knows that a
+    /// <see cref="GetStreamsAsync(StremioUri, CancellationToken)"/> of the same title to take. Whoever knows that a
     /// stream sync is about to follow calls this: the answer is the addon's slowest (0.6 to
     /// 1.5 s), and it does not depend on what the caller does in between.
     /// </summary>
@@ -950,7 +969,10 @@ public class GelatoStremioProvider(
         meta.App_Extras.HasWatchProviders = movie.WatchProviders?.Any() ?? false;
     }
 
-    public async Task<List<StremioStream>> GetStreamsAsync(StremioUri uri)
+    public async Task<List<StremioStream>> GetStreamsAsync(
+        StremioUri uri,
+        CancellationToken cancellationToken = default
+    )
     {
         if (StreamsAhead.TryTake(StreamsKey(uri)) is { } ahead)
         {
@@ -958,23 +980,31 @@ public class GelatoStremioProvider(
                 "GetStreamsAsync: taking the answer asked for ahead for {Id}",
                 uri.ExternalId
             );
-            return await ahead.ConfigureAwait(false);
+            // The ahead request has no token of its own: the caller stops waiting, not the request.
+            return await ahead.WaitAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        return await GetStreamsAsync(uri.ExternalId, uri.MediaType);
+        return await GetStreamsAsync(uri.ExternalId, uri.MediaType, cancellationToken)
+            .ConfigureAwait(false);
     }
 
-    private async Task<List<StremioStream>> GetStreamsAsync(string id, StremioMediaType mediaType)
+    private async Task<List<StremioStream>> GetStreamsAsync(
+        string id,
+        StremioMediaType mediaType,
+        CancellationToken cancellationToken = default
+    )
     {
         var url = BuildUrl(["stream", mediaType.ToString().ToLower(), id]);
         // AIOStreams only adds its stream data (the torrent's info hash, the file's size) for
         // requests it takes for another AIOStreams, told by the User-Agent. RemuxDB needs the
         // hash to match and accept a file; Remux asks the same way. Other addons keep getting
         // Gelato's own.
-        var manifest = await GetManifestAsync().ConfigureAwait(false);
+        // The manifest read is shared: the caller stops waiting for it, the read goes on.
+        var manifest = await GetManifestAsync().WaitAsync(cancellationToken).ConfigureAwait(false);
         var r = await GetJsonAsync<StremioStreamsResponse>(
             url,
-            IsAioStreams(manifest) ? AioStreamsUserAgent : null
+            IsAioStreams(manifest) ? AioStreamsUserAgent : null,
+            cancellationToken
         );
 
         return r?.Streams ?? [];
