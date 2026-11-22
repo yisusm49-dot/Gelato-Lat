@@ -52,7 +52,7 @@ subconjuntos). `PlaybackFailover` activado para que el respaldo relay→nodo fun
 | Import (§3.4) | `CatalogMaxItems` 2000, `LazyImages` on, `ImportPeople`/`PeopleLimit`, `MetaConcurrency`, reintentos con backoff ante 429/5xx. |
 | Identificación (§4.3) | User-Agent `Gelato-LAT-ADD/<versión>`. |
 
-Tests: `dotnet test` en `Gelato.Tests/` (18 pruebas).
+Tests: `dotnet test` en `Gelato.Tests/` (24 pruebas).
 
 ## Mantenimiento
 
