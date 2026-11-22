@@ -1721,7 +1721,7 @@ public sealed class GelatoManager(
         // Next to the addon's request: RemuxDB answers in well under a second, and gives up after
         // a few.
         var remuxDbLookup = remuxDb.LookupAsync(uri.ExternalId, ct);
-        var streams = await stremio.GetStreamsAsync(uri).ConfigureAwait(false);
+        var streams = await stremio.GetStreamsAsync(uri, ct).ConfigureAwait(false);
 
         // Filter valid streams
         var acceptable = streams
