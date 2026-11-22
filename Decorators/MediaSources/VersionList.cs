@@ -82,6 +82,8 @@ internal sealed class VersionList(
         // is hashed), but its rows went with it, so it must sync anew within StreamTTL.
         var cacheKey = StreamSyncOnOpen.SyncCacheKey(item, userId);
 
+        // A sync left going on in the background owns the links: no relink beside it (#19).
+        var syncInFlight = false;
         if (!allowSync)
         {
             _log.LogDebug(
@@ -92,7 +94,7 @@ internal sealed class VersionList(
         }
         else if (uri is not null && !isStreamRow && !manager.HasStreamSync(cacheKey, syncItemId))
         {
-            decorator.Sync.SyncNow(item, userId, uri, cacheKey);
+            syncInFlight = !decorator.Sync.SyncNow(item, userId, uri, cacheKey);
         }
 
         var itemId = item.Id.ToString("N", CultureInfo.InvariantCulture);
@@ -116,6 +118,7 @@ internal sealed class VersionList(
             && !notInLibrary
             && primary is not null
             && !isStreamRow
+            && !syncInFlight
             && primary.IsGelatoPlaybackItem()
             && manager.RelinkOwnedRows(primary)
         )

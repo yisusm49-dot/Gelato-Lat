@@ -24,6 +24,9 @@ internal sealed class StreamSyncOnOpen(
     private readonly Lazy<SubtitleProvider> _subtitleProvider = subtitleProvider;
     private readonly KeyLock _lock = new();
 
+    /// <summary>How long a page open waits for its streams' sync.</summary>
+    private static readonly TimeSpan SyncTimeout = TimeSpan.FromSeconds(10);
+
     internal static string SyncCacheKey(BaseItem item, Guid userId)
     {
         var syncItemId = (item as Video)?.PrimaryVersionId ?? item.Id;
@@ -32,16 +35,16 @@ internal sealed class StreamSyncOnOpen(
     }
 
     /// <summary>
-    /// Syncs the item's streams for the user, once at a time per item, and waits for it: the
-    /// version list built next lists what the sync wrote.
+    /// Syncs the item's streams for the user, once at a time per item, and waits for it up to
+    /// <see cref="SyncTimeout"/>: the version list built next lists what the sync wrote. False
+    /// when the wait ran out and the sync goes on in the background.
     /// </summary>
-    internal void SyncNow(BaseItem item, Guid userId, StremioUri uri, string cacheKey)
+    internal bool SyncNow(BaseItem item, Guid userId, StremioUri uri, string cacheKey)
     {
         var manager = _manager.Value;
 
         // Bug in web UI that calls the detail page twice. So that's why there's a lock.
-        _lock
-            .RunSingleFlightAsync(
+        var sync = _lock.RunSingleFlightAsync(
                 item.Id,
                 async ct =>
                 {
@@ -94,12 +97,29 @@ internal sealed class StreamSyncOnOpen(
                         _log.LogError(ex, "Failed to sync streams for {Id}", item.Id);
                     }
                 }
-            )
-            .GetAwaiter()
-            .GetResult();
+            );
+
+        // Waited for, so the version list lists what the sync wrote, but no longer than this: the
+        // wait sits on the request's thread. The shared sync is not cancelled, so a slow addon
+        // still fills the cache for the next open, and other waiters keep their own wait (#19).
+        var done = true;
+        try
+        {
+            sync.WaitAsync(SyncTimeout).GetAwaiter().GetResult();
+        }
+        catch (TimeoutException)
+        {
+            done = false;
+            _log.LogWarning(
+                "Syncing streams for {Id} took longer than {Seconds}s; the page lists the streams it has and the sync finishes in the background",
+                item.Id,
+                SyncTimeout.TotalSeconds
+            );
+        }
 
         // refresh item
         _libraryManager.GetItemById(item.Id);
+        return done;
     }
 
     /// <summary>The sync <see cref="SyncNow"/> runs, when the item's streams are not synced.</summary>
