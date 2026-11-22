@@ -9,6 +9,14 @@
     "owner": "lstb1t",
     "versions": [
       {
+        "changelog": "- Un addon que pide esperar con Retry-After ya no bloquea más de 30 s, y el timeout de quien llama ahora corta la petición HTTP (#15).\n- Dos archivos cuyo id solo difiere en mayúsculas ya no se funden en una sola versión (#16).\n- Al abrir una ficha, la espera de los streams es de 10 s como máximo; si el addon tarda más, la sincronización termina en segundo plano (#19).",
+        "checksum": "e143b249f6217789436946f1768aa2db",
+        "sourceUrl": "https://github.com/yisusm49-dot/Gelato-Lat/releases/download/v0.26.28.1002/gelato_0.26.28.1002.zip",
+        "targetAbi": "12.1.0.0",
+        "timestamp": "2026-11-22T20:08:35Z",
+        "version": "0.26.28.1002"
+      },
+      {
         "changelog": "Import Catalogs corre sola cada día a las 4:00 (hora del servidor): lo que se sube al addon llega a la biblioteca sin correrla a mano. Un horario ya guardado se conserva (#13).",
         "checksum": "ec5d0efd0187496668d7efb7bf183573",
         "sourceUrl": "https://github.com/yisusm49-dot/Gelato-Lat/releases/download/v0.26.28.1001/gelato_0.26.28.1001.zip",
